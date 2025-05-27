@@ -14,6 +14,7 @@ dependencies:
   firebase_auth: ^4.17.3
   cloud_firestore: ^4.16.1
   another_flushbar: ^1.12.30
+  google_fonts: ^6.1.0
   
 dev_dependencies:
   flutter_test:
@@ -22,3 +23,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/banner.png
+

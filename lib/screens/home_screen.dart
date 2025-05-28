@@ -1,7 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'product_screen.dart'; // Import your actual ProductsScreen
+import 'package:provider/provider.dart';
+import '../providers/favorites_provider.dart';
+import 'product_screen.dart';
+import 'favorites_screen.dart';
+import 'profile_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,8 +19,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     const HomeScreenContent(),
     const ProductsScreen(),
-    const Center(child: Text('Favorites Page')),
-    const Center(child: Text('Profile Page')),
+    const FavoritesScreen(),
+    const ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -58,7 +61,7 @@ class HomeScreenContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final favorites = Provider.of<FavoritesProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -66,7 +69,6 @@ class HomeScreenContent extends StatelessWidget {
           "Discover",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
-        centerTitle: false,
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16),
@@ -79,7 +81,6 @@ class HomeScreenContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               height: 48,
@@ -101,8 +102,6 @@ class HomeScreenContent extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-
-            // Banner with text
             Stack(
               children: [
                 Container(
@@ -135,17 +134,12 @@ class HomeScreenContent extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 24),
-            Text(
+            const Text(
               "Featured Products",
-              style: theme.textTheme.titleMedium!.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
-
-            // Featured products
             StreamBuilder<QuerySnapshot>(
               stream:
                   FirebaseFirestore.instance
@@ -156,7 +150,6 @@ class HomeScreenContent extends StatelessWidget {
                 if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
-
                 final docs = snapshot.data!.docs;
 
                 return GridView.builder(
@@ -171,73 +164,78 @@ class HomeScreenContent extends StatelessWidget {
                   ),
                   itemBuilder: (context, index) {
                     final data = docs[index].data() as Map<String, dynamic>;
+                    final docId = docs[index].id;
+                    final isFavorite = favorites.isFavorite(docId);
+
                     return GestureDetector(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/product-details',
-                          arguments: data,
-                        );
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          color: Colors.grey[100],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            AspectRatio(
-                              aspectRatio: 1.2,
-                              child: ClipRRect(
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(16),
-                                ),
-                                child: Image.network(
-                                  data['imageurl'] ?? '',
-                                  fit: BoxFit.cover,
-                                  errorBuilder:
-                                      (_, __, ___) => const Center(
-                                        child: Icon(Icons.broken_image),
-                                      ),
-                                ),
-                              ),
+                      onTap:
+                          () => Navigator.pushNamed(
+                            context,
+                            '/product-details',
+                            arguments: data,
+                          ),
+                      child: Stack(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              color: Colors.grey[100],
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    data['name'] ?? '',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                AspectRatio(
+                                  aspectRatio: 1.2,
+                                  child: ClipRRect(
+                                    borderRadius: const BorderRadius.vertical(
+                                      top: Radius.circular(16),
+                                    ),
+                                    child: Image.network(
+                                      data['imageurl'] ?? '',
+                                      fit: BoxFit.cover,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "\$${data['price']}",
-                                    style: const TextStyle(
-                                      color: Colors.purple,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  const Row(
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Icon(
-                                        Icons.star,
-                                        color: Colors.orange,
-                                        size: 16,
+                                      Text(
+                                        data['name'] ?? '',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                      SizedBox(width: 4),
-                                      Text("4.8"),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "\$${data['price']}",
+                                        style: const TextStyle(
+                                          color: Colors.purple,
+                                        ),
+                                      ),
                                     ],
                                   ),
-                                ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: GestureDetector(
+                              onTap:
+                                  () => favorites.toggleFavorite(docId, data),
+                              child: Icon(
+                                isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: isFavorite ? Colors.red : Colors.grey,
                               ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                     );
                   },

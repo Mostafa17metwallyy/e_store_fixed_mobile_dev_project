@@ -1,6 +1,6 @@
 name: e_store_app
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 version: 1.0.0+1
 
 environment:
@@ -15,7 +15,9 @@ dependencies:
   cloud_firestore: ^4.16.1
   another_flushbar: ^1.12.30
   google_fonts: ^6.1.0
-  
+  firebase_storage: ^11.6.0
+  image_picker: ^1.0.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -25,4 +27,3 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/banner.png
-

@@ -6,7 +6,14 @@ class CartProvider with ChangeNotifier {
 
   List<Product> get items => _items;
 
-  void addToCart(Product product) {
+  int get itemCount => _items.length;
+
+  double get totalPrice {
+    return _items.fold(0, (sum, item) => sum + item.price);
+  }
+
+  void addToCart(Map<String, dynamic> productData) {
+    final product = Product.fromMap(productData);
     _items.add(product);
     notifyListeners();
   }
@@ -19,13 +26,5 @@ class CartProvider with ChangeNotifier {
   void clearCart() {
     _items.clear();
     notifyListeners();
-  }
-
-  double get totalPrice {
-    return _items.fold(0.0, (sum, item) => sum + item.price);
-  }
-
-  bool isInCart(Product product) {
-    return _items.contains(product);
   }
 }
